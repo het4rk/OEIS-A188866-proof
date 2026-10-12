@@ -47,6 +47,8 @@ OEIS A188861: column 4, “Empirical: \(a(n)=27n-13\) for \(n>1\)”. It also ca
 
 \section{Proof}
 
+The predicate \texttt{ValidArray} in the formalization is the direct transcription of the OEIS definition. An entry \(a_{i,j}=\mathsf{false}\) (a 0) forces every entry strictly below it in the same column to be 0, and every entry strictly below it in an adjacent column to be 0. Rows are indexed from 0 (top) to \(n-1\) (bottom); columns from 0 (left) to \(k-1\) (right). This matches the classical “0 forces 0s vertically, diagonally and antidiagonally in the next rows” reading of A188866, and is equivalent to each column being a (possibly empty) initial segment of 1s followed by 0s, with adjacent column heights differing by at most 1.
+
 \textbf{Step 1 (arrays \(\leftrightarrow\) smooth words).} Taking \(j'=j\) shows each column is a block of 1s followed by 0s. Let \(t_j\in\{0,\dots,n\}\) be the number of 1s in column \(j\). The diagonal conditions hold exactly when \(|t_j-t_{j+1}|\le 1\) for every \(j\). If \(t_j\ge t_{j+2}\), the 0 at row \(t_j\) of column \(j\) sits above a 1 in column \(j'\). Conversely, if all adjacent letters differ by at most 1, no such configuration can occur. So \(T(n,k)\) counts words \(t\in\{0,\dots,n\}^k\) with adjacent letters differing by at most 1. This bijection was noted on OEIS by A.~Howroyd (2017). Such words are the “smooth words” of Knopfmacher, Mansour, Munagi and Prodinger.
 
 \textbf{Step 2 (fibres over step sequences).} Write \(L=k-1\) and \(M=n\). A smooth word is fixed by its step sequence \(s\in\{-1,0,1\}^L\) together with its first letter \(x\), because \(t_i=x+S_i\). The word stays inside \([0,M]\) exactly when \(x\in[-\min S,M-\max S]\). That interval has \(M+1-(\max S-\min S)\) points whenever \(\max S-\min S\le L\le M+1\). Summing over the \(3^L\) step sequences gives \(T(n,k)=3^L(M+1)-R_L\).
@@ -55,7 +57,7 @@ OEIS A188861: column 4, “Empirical: \(a(n)=27n-13\) for \(n>1\)”. It also ca
 
 \section{Lean formalization}
 
-Project: \texttt{NovelProof/} (Lean v4.35.0-rc4, Mathlib at the matching tag).
+Project: \texttt{NovelProof/} (Lean v4.35.0-rc4; Mathlib pinned to v4.35.0-rc1 via the committed \texttt{lake-manifest.json}).
 
 \begin{itemize}
 \item \texttt{NovelProof/Words.lean}: step sequences \texttt{StepSeqs}, partial sums, range \texttt{rangeOf}, total range \texttt{R L}, smooth words \texttt{isSmooth} / \texttt{W M L}, the fibre count \texttt{numStarts}, and the closed form \texttt{W\_formula}.
