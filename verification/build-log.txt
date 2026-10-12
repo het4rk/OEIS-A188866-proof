@@ -1,0 +1,10 @@
+# Fresh clone of https://github.com/het4rk/OEIS-A188866-proof at 8b0e0356d9ed494ca9b3ca765e8a957cc7e39549
+# Mathlib .lake/packages reused from an identical lake-manifest (Mathlib 1f414401); project files compiled from scratch.
+# Command: lake build
+⚠ [9020/9024] Built NovelProof.Words (249s)
+warning: NovelProof/Words.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+✔ [9021/9024] Built NovelProof.Arrays (180s)
+✔ [9022/9024] Built NovelProof.Corollaries (186s)
+✔ [9023/9024] Built NovelProof (502s)
+Build completed successfully (9024 jobs).
+build exit 0
