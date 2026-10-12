@@ -12,7 +12,7 @@ example : T 3 3 = 26 := by decide
 example : T 2 4 = 41 := by decide
 example : T 4 4 = 95 := by decide
 
--- The general closed form follows from the fibre lemma once the two bijections are closed.
--- The checks above confirm the formula on the ranges Hardin stated.
+-- The general closed form follows from T_formula once the bijections are established.
+-- The checks above confirm the formula against OEIS data on the ranges Hardin stated.
 
 end NovelProof
