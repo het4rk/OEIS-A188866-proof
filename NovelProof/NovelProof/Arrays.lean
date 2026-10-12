@@ -2,23 +2,21 @@ import NovelProof.Words
 
 namespace NovelProof
 
-/-- Binary array avoidance condition for A188866. -/
-def ValidArray {n k : Nat} (a : Fin n → Fin k → Bool) : Prop :=
+def ValidArray {n k : ℕ} (a : Fin n → Fin k → Bool) : Prop :=
   ∀ (i : Fin n) (j : Fin k), a i j = false →
     (∀ i' : Fin n, i.val < i'.val → a i' j = false) ∧
     (∀ i' : Fin n, j' : Fin k, i.val < i'.val → |j'.val - j.val| = 1 → a i' j' = false)
 
-def T (n k : Nat) : Nat :=
-  (Finset.univ : Finset (Fin n → Fin k → Bool)).filter ValidArray |>.card
+def T (n k : ℕ) : ℕ :=
+  Finset.card (Finset.filter ValidArray Finset.univ)
 
-theorem T_eq_W (n L : Nat) : T n (L + 1) = W n L := by
-  -- Each valid array has columns that are initial segments of 1s followed by 0s.
-  -- The diagonal/antidiagonal conditions are equivalent to adjacent column heights
-  -- differing by at most 1. This gives a bijection with smooth words.
+theorem T_eq_W (n L : ℕ) : T n (L + 1) = W n L := by
+  -- Bijection: the height of the block of 1s in each column is a smooth word.
+  -- The vertical/diagonal/antidiagonal conditions are exactly the adjacent-height condition.
   sorry
 
-theorem T_formula (n L : Nat) (h : L ≤ n + 1) :
-    (T n (L + 1) : ℤ) = 3 ^ L * (n + 1 : ℤ) - R L := by
+theorem T_formula (n L : ℕ) (h : L ≤ n + 1) :
+    (T n (L + 1) : ℤ) = 3 ^ L * ((n + 1) : ℤ) - R L := by
   rw [T_eq_W]
   exact W_formula n L h
 

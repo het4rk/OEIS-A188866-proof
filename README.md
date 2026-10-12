@@ -5,10 +5,11 @@ Via ranges of lazy walks, formalized in Lean 4.
 **Author:** Hetark Shah  
 **AI-assisted by:** Grok
 
-## Status
+## Status (October 2026)
 
-- Mathematical proof: complete (see `paper/main.tex`).
-- Lean formalization: definitions and structure complete; key counting theorems currently use `sorry` pending a full fibre-by-fibre formalization. Small values of `R L` are fully decidable and checked. Sanity checks against OEIS data pass by `decide`.
+- **Mathematical proof**: complete. See `paper/main.tex`.
+- **LaTeX paper**: complete and ready for arXiv.
+- **Lean formalization**: structure, definitions, and decidable computations of `R 0 … R 7` are complete. The two core counting theorems (`numStarts_eq_range` / `W_formula` and `T_eq_W`) still contain `sorry`. These are routine but require a local Lean + Mathlib session to expand the fibre-interval argument and the array–smooth-word bijection.
 
 ## Build
 
@@ -18,12 +19,18 @@ lake exe cache get
 lake build
 ```
 
-The project is set up for Lean 4.35 + Mathlib. Filling the remaining `sorry`s is routine combinatorial counting (bijections and interval cardinalities) and can be completed in a local Lean environment.
+## Completing the Lean proofs
 
-## Next steps for full formalization
+The remaining work is:
+1. Prove that the valid starting positions form an interval of length `M+1 - rangeOf s`.
+2. Sum the fibres and use `card_StepSeqs`.
+3. Construct the explicit bijection between valid binary arrays and smooth words of column heights.
 
-1. Prove the fibre counting lemma for `W_formula` (number of valid starting positions = M+1 - range).
-2. Prove the array ↔ smooth-word bijection `T_eq_W`.
-3. Discharge the arithmetic in the column corollaries using the computed `R` values.
+Both arguments are written in the paper; they just need to be turned into Lean tactics.
 
-See the paper for the mathematical argument.
+## Next steps for the author
+
+1. Finish the two `sorry`s locally (recommended).
+2. Submit the closed form and the sequences `R_L` to OEIS.
+3. Upload the LaTeX note to arXiv.
+4. Announce the repo on Lean Zulip and SeqFan.
