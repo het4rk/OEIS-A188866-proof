@@ -1,0 +1,4 @@
+'NovelProof.T_eq_W' depends on axioms: [propext, Classical.choice, Quot.sound]
+'NovelProof.T_formula' depends on axioms: [propext, Classical.choice, Quot.sound]
+'NovelProof.T_col4' depends on axioms: [propext, Classical.choice, Quot.sound]
+'NovelProof.T_col8' depends on axioms: [propext, Classical.choice, Quot.sound]

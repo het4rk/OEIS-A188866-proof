@@ -1,210 +1,167 @@
-import Mathlib.Data.Finset.Basic
-import Mathlib.Data.Fintype.Basic
-import Mathlib.Data.Int.Interval
-import Mathlib.Algebra.BigOperators.Finset.Basic
-import Mathlib.Tactic
+import Mathlib
+
+open Finset
 
 namespace NovelProof
 
-def Steps : Finset ℤ := {-1, 0, 1}
-lemma Steps_card : Steps.card = 3 := by decide
+/-- Words of length `L+1` over `{0,…,M}` whose consecutive letters differ by at most 1. -/
+def WValid (M L : ℕ) (t : Fin (L+1) → Fin (M+1)) : Prop :=
+  ∀ i : Fin L, |((t i.succ : ℕ) : ℤ) - ((t i.castSucc : ℕ) : ℤ)| ≤ 1
 
-def StepSeqs (L : ℕ) : Finset (Fin L → ℤ) := Fintype.piFinset (fun _ => Steps)
-lemma card_StepSeqs (L : ℕ) : (StepSeqs L).card = 3 ^ L := by
-  simp [StepSeqs, Fintype.card_piFinset, Steps_card]
+instance (M L : ℕ) : DecidablePred (WValid M L) := fun _ => by unfold WValid; infer_instance
 
-def partialSums {L : ℕ} (s : Fin L → ℤ) : Fin (L + 1) → ℤ
-  | ⟨0, _⟩ => 0
-  | ⟨i + 1, h⟩ => partialSums s ⟨i, Nat.lt_of_succ_lt_succ h⟩ + s ⟨i, Nat.lt_of_succ_lt_succ h⟩
+/-- Number of such words. -/
+def W (M L : ℕ) : ℕ := (univ.filter (WValid M L)).card
 
-def rangeOf {L : ℕ} (s : Fin L → ℤ) : ℤ :=
-  let ps := Finset.image (partialSums s) Finset.univ
-  ps.max'.getD 0 - ps.min'.getD 0
+/-- Allowed step sequences. -/
+def D (L : ℕ) : Finset (Fin L → ℤ) := Fintype.piFinset fun _ => ({-1, 0, 1} : Finset ℤ)
 
-def R (L : ℕ) : ℤ := ∑ s ∈ StepSeqs L, rangeOf s
+/-- Partial sums of a step sequence. -/
+def P {L : ℕ} (d : Fin L → ℤ) : ℕ → ℤ
+  | 0 => 0
+  | i+1 => P d i + (if h : i < L then d ⟨i, h⟩ else 0)
 
-def isSmooth {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) : Prop :=
-  ∀ i : Fin L, |(t i.castSucc).val - (t i.succ).val| ≤ 1
+lemma rne (L : ℕ) : (range (L+1)).Nonempty := ⟨0, by simp⟩
 
-def W (M L : ℕ) : ℕ := (Finset.univ.filter (isSmooth (M:=M) (L:=L))).card
+/-- Maximum of the walk. -/
+def hi {L : ℕ} (d : Fin L → ℤ) : ℤ := (range (L+1)).sup' (rne L) (P d)
+/-- Minus the minimum of the walk. -/
+def lo {L : ℕ} (d : Fin L → ℤ) : ℤ := - (range (L+1)).inf' (rne L) (P d)
 
-def numStarts {L : ℕ} (s : Fin L → ℤ) (M : ℕ) : ℕ :=
-  ((Finset.Icc (0 : ℤ) (M : ℤ)).filter
-    (fun x => ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ))).card
+/-- Total range `∑ (max - min)` over all `3^L` lazy walks of length `L`. -/
+def R (L : ℕ) : ℤ := ∑ d ∈ D L, (hi d + lo d)
 
-lemma partialSums_zero {L : ℕ} (s : Fin L → ℤ) : partialSums s ⟨0, by omega⟩ = 0 := rfl
+def steps {M L : ℕ} (t : Fin (L+1) → Fin (M+1)) : Fin L → ℤ :=
+  fun i => ((t i.succ : ℕ) : ℤ) - ((t i.castSucc : ℕ) : ℤ)
 
-lemma min_le_zero {L : ℕ} (s : Fin L → ℤ) :
-    (Finset.image (partialSums s) Finset.univ).min'.getD 0 ≤ 0 := by
-  apply Finset.min'_le; exact ⟨⟨0, by omega⟩, by simp [partialSums]⟩
-
-lemma zero_le_max {L : ℕ} (s : Fin L → ℤ) :
-    0 ≤ (Finset.image (partialSums s) Finset.univ).max'.getD 0 := by
-  apply Finset.le_max'; exact ⟨⟨0, by omega⟩, by simp [partialSums]⟩
-
-lemma numStarts_eq_range {L M : ℕ} (s : Fin L → ℤ) (hr : rangeOf s ≤ (M : ℤ) + 1) :
-    numStarts s M = (M + 1 : ℕ) - rangeOf s := by
-  set ps := Finset.image (partialSums s) Finset.univ
-  set m := ps.min'.getD 0
-  set Mmax := ps.max'.getD 0
-  have hm0 : m ≤ 0 := min_le_zero s
-  have hM0 : 0 ≤ Mmax := zero_le_max s
-  have hrange : rangeOf s = Mmax - m := rfl
-  have hiff (x : ℤ) :
-      (∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ)) ↔
-      -m ≤ x ∧ x ≤ (M : ℤ) - Mmax := by
-    constructor
-    · intro h
-      constructor
-      · obtain ⟨i, hi⟩ := Finset.min'_mem ps (by simp)
-        have := h i; simp [hi] at this; omega
-      · obtain ⟨i, hi⟩ := Finset.max'_mem ps (by simp)
-        have := h i; simp [hi] at this; omega
-    · intro ⟨h1, h2⟩ i
-      have hS : m ≤ partialSums s i ∧ partialSums s i ≤ Mmax := by
-        constructor
-        · exact Finset.min'_le _ (Finset.mem_image.mpr ⟨i, Finset.mem_univ _, rfl⟩)
-        · exact Finset.le_max' _ (Finset.mem_image.mpr ⟨i, Finset.mem_univ _, rfl⟩)
-      constructor <;> omega
-  have heq : (Finset.Icc (0 : ℤ) (M : ℤ)).filter
-      (fun x => ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ)) =
-      Finset.Icc (-m) ((M : ℤ) - Mmax) := by
-    ext x
-    simp only [Finset.mem_filter, Finset.mem_Icc]
-    constructor
-    · rintro ⟨_, hcond⟩; exact (hiff x).1 hcond
-    · rintro ⟨h1, h2⟩
-      have hx : 0 ≤ x ∧ x ≤ (M : ℤ) := by constructor <;> omega
-      exact ⟨hx, (hiff x).2 ⟨h1, h2⟩⟩
-  have hab : -m ≤ (M : ℤ) - Mmax := by
-    have : Mmax - m ≤ (M : ℤ) + 1 := by rwa [← hrange]; omega
-  rw [numStarts, heq, Finset.card_Icc]; simp [hrange]; omega
-
-lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : rangeOf s ≤ (L : ℤ) := by
-  induction L with
-  | zero => simp [rangeOf, partialSums]; omega
-  | succ L ih =>
-    let s' : Fin L → ℤ := fun i => s ⟨i.val, by omega⟩
-    have hs' : ∀ i, s' i ∈ Steps := fun i => hs ⟨i.val, by omega⟩
-    have ih' := ih s' hs'
-    have hstep : |s ⟨L, by omega⟩| ≤ 1 := by
-      have := hs ⟨L, by omega⟩; simp [Steps] at this; omega
-    have : rangeOf s ≤ rangeOf s' + 1 := by simp [rangeOf]; omega
-    omega
-
-def toStep {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) : Fin L → ℤ :=
-  fun i => (t i.succ).val - (t i.castSucc).val
-
-def fromPair {M L : ℕ} (s : Fin L → ℤ) (x : ℤ) : Fin (L + 1) → ℤ :=
-  fun i => x + partialSums s i
-
-lemma toStep_fromPair {M L : ℕ} (s : Fin L → ℤ) (x : ℤ) :
-    toStep (fun i => ⟨(fromPair s x i).toNat, by omega⟩) = s := by
-  ext i; simp [toStep, fromPair, partialSums]; omega
-
-lemma reconstruct {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) (ht : isSmooth t) :
-    ∀ j, (t j).val = (t ⟨0, by omega⟩).val + partialSums (toStep t) j := by
-  intro j
-  induction j using Fin.induction with
-  | zero => simp [partialSums]
-  | succ j ih =>
-    have hdiff : (t j.succ).val = (t j.castSucc).val + toStep t j := by
-      simp [toStep]; omega
-    simp [partialSums]
-    rw [hdiff, ih]
-    omega
-
-lemma toStep_of_smooth {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) (ht : isSmooth t) :
-    ∀ i, toStep t i ∈ Steps := by
+lemma P_telescope {M L : ℕ} (t : Fin (L+1) → Fin (M+1)) :
+    ∀ i (hi : i < L + 1), ((t ⟨i, hi⟩ : ℕ) : ℤ) = ((t 0 : ℕ) : ℤ) + P (steps t) i := by
   intro i
+  induction i with
+  | zero => intro h; simp [P]
+  | succ i ih =>
+    intro h
+    have h' : i < L := by omega
+    rw [P, ← add_assoc, ← ih (by omega)]
+    simp only [h', ↓reduceDIte]
+    simp only [steps]
+    have e1 : (⟨i, h'⟩ : Fin L).succ = ⟨i+1, h⟩ := rfl
+    have e2 : (⟨i, h'⟩ : Fin L).castSucc = ⟨i, by omega⟩ := rfl
+    rw [e1, e2]; ring
+
+lemma P_lip {L : ℕ} {d : Fin L → ℤ} (hd : d ∈ D L) :
+    ∀ a b, a ≤ b → |P d b - P d a| ≤ (b - a : ℕ) := by
+  intro a b hab
+  obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hab
+  induction c with
+  | zero => simp
+  | succ c ih =>
+    have := ih (by omega)
+    have hstep : |(if h : a + c < L then d ⟨a + c, h⟩ else 0)| ≤ 1 := by
+      split_ifs with h
+      · have := (Fintype.mem_piFinset.mp hd) ⟨a+c, h⟩
+        simp only [mem_insert, mem_singleton] at this
+        rcases this with h | h | h <;> simp [h]
+      · simp
+    rw [show a + (c+1) = (a + c) + 1 by omega, P]
+    calc |P d (a + c) + _ - P d a| = |(P d (a+c) - P d a) + (if h : a + c < L then d ⟨a + c, h⟩ else 0)| := by ring_nf
+      _ ≤ |P d (a+c) - P d a| + |(if h : a + c < L then d ⟨a + c, h⟩ else 0)| := abs_add_le _ _
+      _ ≤ _ := by
+          have e : a + c + 1 - a = c + 1 := by omega
+          have e2 : a + c - a = c := by omega
+          rw [e2] at this; rw [e]; push_cast; linarith
+
+lemma P_zero {L : ℕ} (d : Fin L → ℤ) : P d 0 = 0 := rfl
+
+lemma hi_nonneg {L : ℕ} (d : Fin L → ℤ) : 0 ≤ hi d :=
+  (P_zero d).symm ▸ le_sup' (P d) (by simp : 0 ∈ range (L+1))
+
+lemma lo_nonneg {L : ℕ} (d : Fin L → ℤ) : 0 ≤ lo d := by
+  have := inf'_le (P d) (by simp : 0 ∈ range (L+1))
+  rw [P_zero] at this; unfold lo; linarith
+
+lemma hi_add_lo_le {L : ℕ} {d : Fin L → ℤ} (hd : d ∈ D L) : hi d + lo d ≤ L := by
+  obtain ⟨a, ha, ea⟩ := exists_mem_eq_sup' (rne L) (P d)
+  obtain ⟨b, hb, eb⟩ := exists_mem_eq_inf' (rne L) (P d)
+  simp only [mem_range] at ha hb
+  unfold hi lo; rw [ea, eb]
+  rcases le_total a b with h | h
+  · have := P_lip hd a b h
+    have := neg_abs_le (P d b - P d a)
+    push_cast [h] at *; omega
+  · have := P_lip hd b a h
+    have := le_abs_self (P d a - P d b)
+    push_cast [h] at *; omega
+
+/-- Fiber count: words with a fixed step sequence are determined by their first letter. -/
+lemma fiber_card {M L : ℕ} (hLM : L ≤ M + 1) {d : Fin L → ℤ} (hd : d ∈ D L) :
+    (((univ.filter (WValid M L)).filter (fun t => steps t = d)).card : ℤ)
+      = (M : ℤ) + 1 - (hi d + lo d) := by
+  have hcard : ((Icc (lo d) ((M:ℤ) - hi d)).card : ℤ) = (M : ℤ) + 1 - (hi d + lo d) := by
+    rw [Int.card_Icc]; have := hi_add_lo_le hd; rw [Int.toNat_of_nonneg (by omega)]; ring
+  rw [← hcard]
+  have hPlo : ∀ i, i < L + 1 → -lo d ≤ P d i := fun i hi => by
+    unfold lo; rw [neg_neg]; exact inf'_le _ (mem_range.mpr hi)
+  have hPhi : ∀ i, i < L + 1 → P d i ≤ hi d := fun i hi => le_sup' _ (mem_range.mpr hi)
+  congr 1
+  refine card_bij' (fun t _ => ((t 0 : ℕ) : ℤ))
+    (fun x hx => fun i => ⟨(x + P d i).toNat, by
+      simp only [mem_Icc] at hx; have := hPhi i i.isLt; omega⟩) ?_ ?_ ?_ ?_
+  · intro t ht
+    simp only [mem_filter, mem_univ, true_and] at ht
+    obtain ⟨-, rfl⟩ := ht
+    obtain ⟨a, ha, ea⟩ := exists_mem_eq_sup' (rne L) (P (steps t))
+    obtain ⟨b, hb, eb⟩ := exists_mem_eq_inf' (rne L) (P (steps t))
+    simp only [mem_range] at ha hb
+    have ta := P_telescope t a ha
+    have tb := P_telescope t b hb
+    have := (t ⟨a, ha⟩).isLt
+    have : (0:ℤ) ≤ ((t ⟨b, hb⟩ : ℕ) : ℤ) := by positivity
+    simp only [mem_Icc, hi, lo]; rw [ea, eb]; constructor <;> omega
+  · intro x hx
+    simp only [mem_filter, mem_univ, true_and]
+    have hx' := mem_Icc.mp hx
+    have hval : ∀ i : Fin (L+1), (((⟨(x + P d i).toNat, by
+        have := hPhi i i.isLt; omega⟩ : Fin (M+1)) : ℕ) : ℤ) = x + P d i := by
+      intro i; simp only; have := hPlo i i.isLt; rw [Int.toNat_of_nonneg (by omega)]
+    have hst : steps (fun i : Fin (L+1) => (⟨(x + P d i).toNat, by
+        have := hPhi i i.isLt; omega⟩ : Fin (M+1))) = d := by
+      funext i
+      simp only [steps]; rw [hval, hval]
+      simp only [Fin.val_succ, Fin.val_castSucc, P, i.isLt, ↓reduceDIte]; ring
+    refine ⟨?_, hst⟩
+    intro i
+    have h1 := congrFun hst i
+    simp only [steps] at h1
+    rw [h1]
+    have := (Fintype.mem_piFinset.mp hd) i
+    simp only [mem_insert, mem_singleton] at this
+    rcases this with h | h | h <;> simp [h]
+  · intro t ht
+    simp only [mem_filter, mem_univ, true_and] at ht
+    obtain ⟨-, rfl⟩ := ht
+    funext i; ext; simp only
+    rw [← P_telescope t i i.isLt]; simp
+  · intro x hx
+    simp only [P_zero, add_zero, Fin.val_zero]
+    exact Int.toNat_of_nonneg (by have := lo_nonneg d; simp only [mem_Icc] at hx; omega)
+
+lemma steps_mem {M L : ℕ} {t : Fin (L+1) → Fin (M+1)} (ht : WValid M L t) : steps t ∈ D L := by
+  refine Fintype.mem_piFinset.mpr fun i => ?_
   have := ht i
-  simp [toStep, Steps] at this ⊢
-  omega
+  simp only [steps, mem_insert, mem_singleton]
+  rw [abs_le] at this; omega
 
-lemma valid_start_of_smooth {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) (ht : isSmooth t) :
-    let s := toStep t
-    let x := (t ⟨0, by omega⟩).val
-    ∀ i, 0 ≤ (x : ℤ) + partialSums s i ∧ (x : ℤ) + partialSums s i ≤ (M : ℤ) := by
-  intro i
-  have h := reconstruct t ht i
-  constructor <;> omega
+lemma card_D (L : ℕ) : (D L).card = 3 ^ L := by
+  simp [D, Fintype.card_piFinset]
 
-def fromValid {M L : ℕ} (s : Fin L → ℤ) (x : ℤ)
-    (hx : ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ)) :
-    Fin (L + 1) → Fin (M + 1) :=
-  fun i => ⟨(x + partialSums s i).toNat, by have := hx i; omega⟩
-
-lemma fromValid_smooth {M L : ℕ} (s : Fin L → ℤ) (x : ℤ)
-    (hx : ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ))
-    (hs : ∀ i, s i ∈ Steps) :
-    isSmooth (fromValid s x hx) := by
-  intro i
-  have hdiff : (fromValid s x hx i.succ).val - (fromValid s x hx i.castSucc).val = s i := by
-    simp [fromValid, partialSums]; omega
-  have := hs i
-  simp [Steps] at this
-  simp [isSmooth, fromValid]
-  omega
-
-lemma toStep_fromValid {M L : ℕ} (s : Fin L → ℤ) (x : ℤ)
-    (hx : ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ)) :
-    toStep (fromValid s x hx) = s := by
-  ext i; simp [toStep, fromValid, partialSums]; omega
-
-lemma fromValid_toStep {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) (ht : isSmooth t) :
-    fromValid (toStep t) ((t ⟨0, by omega⟩).val) (valid_start_of_smooth t ht) = t := by
-  ext j
-  simp [fromValid]
-  have h := reconstruct t ht j
-  omega
-
-theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
-    (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
-  have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by
-    let smooth := Finset.univ.filter (isSmooth (M := M) (L := L))
-    have hW : (W M L : ℤ) = ↑smooth.card := by simp [W]
-    let validStarts (s : Fin L → ℤ) :=
-      (Finset.Icc (0 : ℤ) (M : ℤ)).filter
-        (fun x => ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ))
-    have hsum : ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) = ↑((StepSeqs L).sigma validStarts).card := by
-      simp [Finset.card_sigma, numStarts]
-    have hbij_card : smooth.card = ((StepSeqs L).sigma validStarts).card := by
-      apply Finset.card_bij
-        (fun t _ => (toStep t, (t ⟨0, by omega⟩).val))
-        (fun t ht => by
-          simp only [Finset.mem_sigma, Finset.mem_filter, Finset.mem_Icc] at *
-          exact ⟨toStep_of_smooth t ht.2, valid_start_of_smooth t ht.2⟩)
-        (fun t1 ht1 t2 ht2 heq => by
-          have hs : toStep t1 = toStep t2 := congr_arg Prod.fst heq
-          have hx : (t1 ⟨0, by omega⟩).val = (t2 ⟨0, by omega⟩).val := congr_arg Prod.snd heq
-          ext j
-          have h1 := reconstruct t1 ht1.2 j
-          have h2 := reconstruct t2 ht2.2 j
-          simp [hs, hx] at h1 h2 ⊢
-          omega)
-        (fun p hp => by
-          obtain ⟨s, hs, x, hx⟩ := hp
-          simp only [Finset.mem_sigma, Finset.mem_filter] at hs hx
-          let t := fromValid s x hx.2
-          refine ⟨t, ?_, ?_⟩
-          · simp [smooth, Finset.mem_filter]
-            exact fromValid_smooth s x hx.2 (fun i => (Finset.mem_piFinset.mp hs) i)
-          · simp
-            constructor
-            · exact toStep_fromValid s x hx.2
-            · simp [fromValid]; omega)
-    rw [hW, hsum, hbij_card]
-  rw [hbij]
-  have hrange : ∀ s ∈ StepSeqs L, rangeOf s ≤ (M : ℤ) + 1 := by
-    intro s hs
-    have hsteps : ∀ i, s i ∈ Steps := fun i => (Finset.mem_piFinset.mp hs) i
-    have := range_le_L s hsteps; omega
-  calc
-    ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) = ∑ s ∈ StepSeqs L, ((M + 1 : ℕ) - rangeOf s : ℤ) := by
-      apply Finset.sum_congr rfl; intro s hs; simp [numStarts_eq_range s (hrange s hs)]
-    _ = ∑ s ∈ StepSeqs L, ((M + 1 : ℤ) - rangeOf s) := by simp
-    _ = (StepSeqs L).card * (↑M + 1) - ∑ s ∈ StepSeqs L, rangeOf s := by
-      rw [Finset.sum_sub_distrib, Finset.sum_const]
-    _ = 3 ^ L * (↑M + 1) - R L := by simp [card_StepSeqs, R]
+/-- **Main counting theorem.** For `L ≤ M`, the number of words of length `L+1`
+over `{0,…,M}` with adjacent letters differing by at most one equals `3^L (M+1) - R L`. -/
+theorem W_formula {M L : ℕ} (hLM : L ≤ M + 1) : (W M L : ℤ) = 3 ^ L * ((M : ℤ) + 1) - R L := by
+  unfold W R
+  rw [card_eq_sum_card_fiberwise (f := steps) (t := D L) (fun t ht => steps_mem (mem_filter.mp ht).2)]
+  push_cast
+  rw [sum_congr rfl fun d hd => fiber_card hLM hd, sum_sub_distrib, sum_const, card_D]
+  simp
 
 end NovelProof
