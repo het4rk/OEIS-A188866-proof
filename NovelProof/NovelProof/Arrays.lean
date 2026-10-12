@@ -1,5 +1,12 @@
 import NovelProof.Words
 
+/-!
+# Arrays of OEIS A188866 and the bijection with smooth words
+
+Defines `Valid n k` (the OEIS avoidance condition) and `T n k`, proves `T_eq_W` via
+`toArr`/`fromArr`, and deduces `T_formula : L ≤ n+1 → T n (L+1) = 3^L (n+1) - R L`.
+-/
+
 open Finset
 
 namespace NovelProof

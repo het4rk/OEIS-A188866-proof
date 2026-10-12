@@ -1,5 +1,13 @@
 import Mathlib
 
+/-!
+# Smooth words and ranges of lazy walks
+
+`W M L` counts words of length `L+1` over `{0,…,M}` with adjacent letters differing by at most 1.
+`R L` is the total range of all lazy walks in `{-1,0,1}^L`. Main result:
+`W_formula : L ≤ M+1 → W M L = 3^L (M+1) - R L`, via the fibre count `fiber_card`.
+-/
+
 open Finset
 
 namespace NovelProof

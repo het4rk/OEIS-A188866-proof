@@ -1,86 +1,110 @@
 \documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage{amsmath,amssymb,amsthm}
-\usepackage{geometry}
-\geometry{margin=1in}
-\usepackage{hyperref}
-\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
-\usepackage{enumitem}
-
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,tabularx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{array}
+\def\UrlBreaks{\do0\do1\do2\do3\do4\do5\do6\do7\do8\do9\do a\do b\do c\do d\do e\do f\do/\do.\do-}
+\emergencystretch=3em
 \newtheorem{theorem}{Theorem}
-\newtheorem{corollary}[theorem]{Corollary}
 \newtheorem{lemma}[theorem]{Lemma}
-
-\title{A proof of Hardin’s empirical column formulas\\for OEIS A188866, via ranges of lazy walks,\\formalized in Lean 4}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}
+\newcommand{\lean}[1]{{\ttfamily\def\_{\textunderscore\allowbreak}\def\/{/\allowbreak}#1}}
 \author{Hetark Shah, AI-assisted by Grok}
 \date{October 12, 2026}
-
+\title{A proof of Hardin's empirical column formulas for OEIS A188866 via ranges of lazy walks, formalized in Lean~4}
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Let \(T(n,k)\) count the \(n\times k\) binary arrays that avoid the pattern 01 vertically, diagonally and antidiagonally. In other words, a 0 in row \(i\) forces 0s in the three cells below it in row \(i+1\). This is OEIS A188866. Its column \(k=4\) is OEIS A188861. R.~H.~Hardin listed eight empirical column formulas (\(T(n,4)=27n-13\) for \(n>1\), \(\dots\), \(T(n,8)=2187n-3495\) for \(n>5\)), and they are still marked “Empirical” on OEIS. We prove one uniform closed form:
-
-\begin{theorem}
-For all \(k\ge 1\) and \(n\ge k-2\),
-\[
-T(n,k)=3^{k-1}(n+1)-R_{k-1},\qquad
-R_L=\sum_{s\in\{-1,0,1\}^L}\bigl(\max_i S_i-\min_i S_i\bigr),
-\]
-where \(S_0=0\), \(S_i=s_1+\dots+s_i\). So \(R_L\) is the total range of all \(3^L\) lazy walks of length \(L\).
-\end{theorem}
-
-\(R_0,\dots,R_9=0,2,10,40,146,508,1716,5682,18546,59884\). Plugging in \(R_0,\dots,R_7\) gives all eight of Hardin’s column formulas, each with exactly Hardin’s range of validity. The whole development is machine-checked in Lean 4 + Mathlib with no \texttt{sorry} and no axioms beyond Lean’s standard three.
+Let $T(n,k)$ be the number of $n\times k$ binary arrays without the pattern $0\,1$ vertically, diagonally or antidiagonally (OEIS A188866~\cite{oeis}). R.~H.~Hardin recorded eight column formulas, from $T(n,1)=n+1$ to $T(n,8)=2187n-3495$ for $n>5$, which are labelled ``Empirical'' in the OEIS. We prove the uniform closed form $T(n,k)=3^{k-1}(n+1)-R_{k-1}$ for all $k\ge1$ and $n\ge k-2$. Here $R_L$ is the total range of all $3^L$ lazy walks of length $L$. Evaluating $R_0,\dots,R_7$ yields all eight of Hardin's formulas, each on exactly Hardin's range of validity. The whole development is machine-checked in Lean~4 with Mathlib~\cite{mathlib}: no \texttt{sorry}, and only the axioms \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}.
 \end{abstract}
 
-\section{Statement and context}
-
-OEIS A188866 (R.~H.~Hardin, 2011): \(T(n,k)\) as above. It lists the formulas
+\section{Introduction}
+OEIS A188866 (R.~H.~Hardin, 2011) tabulates $T(n,k)$, the number of $n\times k$ binary arrays in which a $0$ at position $(i,j)$ forces $0$ at $(i+1,j-1)$, $(i+1,j)$ and $(i+1,j+1)$ whenever those cells exist. The entry lists the formulas
 \begin{align*}
-T(n,1)&=n+1,&&T(n,2)=3n+1,&&T(n,3)=9n-1,\\
-T(n,4)&=27n-13\ (n>1),&&T(n,5)=81n-65\ (n>2),\\
-T(n,6)&=243n-265\ (n>3),&&T(n,7)=729n-987\ (n>4),\\
-T(n,8)&=2187n-3495\ (n>5),
+T(n,1)&=n+1, & T(n,2)&=3n+1, & T(n,3)&=9n-1,\\
+T(n,4)&=27n-13\ (n>1), & T(n,5)&=81n-65\ (n>2), & T(n,6)&=243n-265\ (n>3),\\
+T(n,7)&=729n-987\ (n>4), & T(n,8)&=2187n-3495\ (n>5),
 \end{align*}
-all labelled Empirical.
+all marked ``Empirical''. We prove them, together with a single formula that covers every column.
 
-OEIS A188861: column 4, “Empirical: \(a(n)=27n-13\) for \(n>1\)”. It also carries conjectured g.f.\ and recurrence from C.~Barker (2018).
+\section{Related work}
+The table A188866 and the formulas were contributed to the OEIS by R.~H.~Hardin in 2011~\cite{oeis}. Columns $k=4,\dots,8$ are the separate entries A188861--A188865~\cite{oeiscols}, which repeat the corresponding empirical formulas. A.~Howroyd (2017) gave a bijection between these arrays and strings over $\{0,\dots,n\}$ of length $k$ whose adjacent letters differ by at most one~\cite{howroyd}. These strings are the \emph{smooth words} of Knopfmacher, Mansour, Munagi and Prodinger~\cite{kmmp}, who give their generating function (Theorem~2.2) and an explicit trigonometric formula for their number (Theorem~2.4). \textbf{In principle, therefore, the column formulas follow from Howroyd's bijection combined with~\cite{kmmp}.} Our contribution is a direct, elementary proof that gives a uniform closed form with constant term $R_{k-1}$, the total range of lazy walks, together with what is to our knowledge the first machine-checked verification. Together these turn the OEIS's ``Empirical'' column formulas for $k=1,\dots,8$ into proved results. Neither $R_L$ nor $3^L-R_L$ appeared in an OEIS search on October 12, 2026. The problem is not in the \texttt{formal-conjectures} repository~\cite{fc}, so our Lean definition is transcribed directly from the OEIS entry. The formalization uses Lean~4~\cite{lean4} and Mathlib~\cite{mathlib}.
 
-\section{Proof}
+\section{Statement}
+For $s\in\{-1,0,1\}^L$ put $S_0=0$ and $S_i=s_1+\dots+s_i$, and define
+\[
+R_L=\sum_{s\in\{-1,0,1\}^L}\Bigl(\max_{0\le i\le L}S_i-\min_{0\le i\le L}S_i\Bigr).
+\]
+Then $R_0,\dots,R_9=0,2,10,40,146,508,1716,5682,18546,59884$.
+\begin{theorem}\label{thm:main}
+For all $k\ge1$ and $n\ge k-2$, $T(n,k)=3^{k-1}(n+1)-R_{k-1}$.
+\end{theorem}
+\begin{corollary}\label{cor:cols}
+All eight of Hardin's column formulas hold, each on the range stated in the OEIS.
+\end{corollary}
 
-The predicate \texttt{Valid n k} in the formalization is the direct transcription of the OEIS definition. A 0 (\(\mathsf{false}\)) at \((i,j)\) forces 0 at \((i+1,j-1)\), \((i+1,j)\), \((i+1,j+1)\) whenever those cells exist. Rows are indexed from 0 (top) to \(n-1\) (bottom), and columns from 0 to \(k-1\). This is equivalent to each column being an initial segment of 1s followed by 0s, with adjacent column heights differing by at most 1.
+\section{Proof overview}
+\textbf{Step 1 (arrays and smooth words).} Taking $j'=j$ shows that each column is a block of $1$s followed by $0$s. Let $t_j\in\{0,\dots,n\}$ be the height of column $j$. The diagonal conditions are then equivalent to $|t_j-t_{j+1}|\le1$. So $T(n,k)=W(n,k-1)$, where $W(M,L)$ counts words $t\in\{0,\dots,M\}^{L+1}$ whose adjacent letters differ by at most one.
 
-\textbf{Step 1 (arrays \(\leftrightarrow\) smooth words).} Taking \(j'=j\) shows each column is a block of 1s followed by 0s. Let \(t_j\in\{0,\dots,n\}\) be the number of 1s in column \(j\). The diagonal conditions hold exactly when \(|t_j-t_{j+1}|\le 1\) for every \(j\). If \(t_j\ge t_{j+2}\), the 0 at row \(t_j\) of column \(j\) sits above a 1 in column \(j'\). Conversely, if all adjacent letters differ by at most 1, no such configuration can occur. So \(T(n,k)\) counts words \(t\in\{0,\dots,n\}^k\) with adjacent letters differing by at most 1. This bijection was noted on OEIS by A.~Howroyd (2017). Such words are the “smooth words” of Knopfmacher, Mansour, Munagi and Prodinger.
+\textbf{Step 2 (fibres over step sequences).} A smooth word is determined by its step sequence $s\in\{-1,0,1\}^L$ and its first letter $x$, since $t_i=x+S_i$. The word stays in $[0,M]$ exactly when $x\in[-\min S,\,M-\max S]$. Because $\max S-\min S\le L\le M+1$, this interval contains exactly $M+1-(\max S-\min S)$ integers. In particular it is never too short for the count to be correct, a boundary case that must be handled explicitly. Summing over all $3^L$ step sequences gives $W(M,L)=3^L(M+1)-R_L$.
 
-\textbf{Step 2 (fibres over step sequences).} Write \(L=k-1\) and \(M=n\). A smooth word is fixed by its step sequence \(s\in\{-1,0,1\}^L\) together with its first letter \(x\), because \(t_i=x+S_i\). The word stays inside \([0,M]\) exactly when \(x\in[-\min S,M-\max S]\). That interval has \(M+1-(\max S-\min S)\) points whenever \(\max S-\min S\le L\le M+1\). Summing over the \(3^L\) step sequences gives \(T(n,k)=3^L(M+1)-R_L\).
+\textbf{Step 3.} Kernel evaluation of $R_0,\dots,R_7$ gives Corollary~\ref{cor:cols}.
 
-\textbf{Step 3.} Evaluating \(R_0,\dots,R_7\) (done in Lean by kernel computation) gives the eight formulas.
+\section{Formalization}
+Table~\ref{tab:lean} lists each mathematical result next to its Lean name. All declarations are in namespace \lean{NovelProof}.
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Lean name (file) & Statement \\
+\midrule
+\lean{Valid}, \lean{T} (\lean{Arrays.lean}) & the OEIS avoidance condition; $T(n,k)$ \\
+\lean{WValid}, \lean{W}, \lean{R} (\lean{Words.lean}) & smooth words; $W(M,L)$; $R_L$ \\
+\lean{fiber\_card}, \lean{hi\_add\_lo\_le} & Step~2 fibre count; range $\le L$ \\
+\lean{W\_formula} & $L\le M+1\Rightarrow W(M,L)=3^L(M+1)-R_L$ \\
+\lean{T\_eq\_W} & $T(n,L+1)=W(n,L)$ (Step~1) \\
+\lean{T\_formula} & Theorem~\ref{thm:main} \\
+\lean{R\_values} (\lean{Corollaries.lean}) & $R_0,\dots,R_7$ \\
+\lean{T\_col1}, \dots, \lean{T\_col8} & Corollary~\ref{cor:cols} \\
+\bottomrule
+\end{tabularx}
+\caption{Theorems and their Lean names.}\label{tab:lean}
+\end{table}
 
-\section{Lean formalization}
-
-Project: \texttt{NovelProof/} (Lean v4.35.0-rc4, Mathlib v4.35.0-rc4, exact revisions locked in \texttt{lake-manifest.json}). Source: \url{https://github.com/het4rk/OEIS-A188866-proof}.
-
+\section{Reproducibility}
 \begin{itemize}
-\item \texttt{NovelProof/Words.lean}: smooth words \texttt{WValid M L} and their count \texttt{W M L}; step sequences \texttt{D L} \(=\{-1,0,1\}^L\); partial sums \texttt{P}; \texttt{hi}, \texttt{lo} (max and minus min of the walk); total range \texttt{R L}. The fibre count \texttt{fiber\_card} (each step sequence \(d\) has exactly \(M+1-(\mathtt{hi}\,d+\mathtt{lo}\,d)\) starting points, using \texttt{hi\_add\_lo\_le : hi d + lo d} \(\le L\le M+1\), so the interval is never empty) and the closed form \texttt{W\_formula : L} \(\le\) \texttt{M+1 → W M L = 3\^{}L*(M+1) - R L}.
-\item \texttt{NovelProof/Arrays.lean}: the array predicate \texttt{Valid n k} and \texttt{T n k}, the bijection \texttt{T\_eq\_W : T n (L+1) = W n L} (via \texttt{toArr}/\texttt{fromArr}), and \texttt{T\_formula : L} \(\le\) \texttt{n+1 → T n (L+1) = 3\^{}L*(n+1) - R L}.
-\item \texttt{NovelProof/Corollaries.lean}: \texttt{R\_values} (\(R_0,\dots,R_7\) by kernel computation) and Hardin's eight column formulas \texttt{T\_col1}, \dots, \texttt{T\_col8}, each with Hardin's range of validity.
+\item Source code: \url{https://github.com/het4rk/OEIS-A188866-proof}. The Lean project is in \texttt{NovelProof/}.
+\item Toolchain: \texttt{leanprover/lean4:v4.35.0-rc4}. Mathlib: tag \texttt{v4.35.0-rc4}, commit \nolinkurl{1f414401f69059aa7eead47b53ee40bd38455eeb}, pinned in \texttt{lake-manifest.json}.
+\item Build:
+\begin{verbatim}
+cd NovelProof
+lake exe cache get
+lake build
+lake env lean Axioms.lean
+\end{verbatim}
+
+\item Axioms: \lean{T\_eq\_W}, \lean{T\_formula}, \lean{T\_col4} and \lean{T\_col8} each depend only on \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}.
+\item Attestation: the directory \texttt{verification/} contains the fresh-clone build log, the axiom output and \texttt{VERIFICATION.md}, which records the commit, the toolchain and SHA-256 hashes of the Lean sources. Continuous integration (\url{https://github.com/het4rk/OEIS-A188866-proof/actions/workflows/lean.yml}) rebuilds the project on every push. It rejects any \texttt{sorry} and any axiom outside the three above, and uploads the build log and axiom report as artifacts.
 \end{itemize}
 
-\texttt{lake build} completes with no errors. \texttt{lake env lean Axioms.lean} reports only \texttt{[propext, Classical.choice, Quot.sound]} for \texttt{T\_eq\_W}, \texttt{T\_formula}, \texttt{T\_col4} and \texttt{T\_col8}. There are no \texttt{sorry}s. CI (GitHub Actions) rebuilds and re-checks axioms on every push.
+\section{Limitations}
+We give no closed form or generating function for $R_L$. Hardin's empirical row recurrences (fixed $n$, varying $k$) are not formalized. They follow from the transfer-matrix and Chebyshev description~\cite{kmmp}. The novelty is modest: the result settles a family of empirical OEIS formulas and identifies their constant term.
 
-\section{Novelty search (honest assessment)}
-
-What I checked: the OEIS entries A188866, A188861 and A188860 and their cross-references, OEIS searches for the sequences \(R_L\) and \(c_k=3^{k-1}-R_{k-1}\) (no hits for 0,2,10,40,146,508,1716 or 1,1,-1,-13,-65,-265,-987), and web searches. I also checked the smooth-words literature: A.~Knopfmacher, T.~Mansour, A.~Munagi, H.~Prodinger, Smooth words and Chebyshev polynomials, arXiv:0809.0551.
-
-\textbf{Known:} the bijection to smooth words (Howroyd on OEIS), and a full generating function and trigonometric formula for smooth words (Knopfmacher et al.\ 2008). Each fixed-\(k\) column formula can therefore be derived from known results in principle, so the column formulas are not deep open problems. Even so, OEIS still lists them as unproven (“Empirical”).
-
-\textbf{Believed new:} (i) the uniform statement \(T(n,k)=3^{k-1}(n+1)-R_{k-1}\) for \(n\ge k-2\), which identifies the constant term as the total range of lazy walks; (ii) the integer sequences \(R_L\) and \(c_k\), which are absent from OEIS; (iii) the first formal verification of these formulas, as far as I can find.
-
-\textbf{Confidence:} high that the theorem is correct (machine-checked). The novelty is modest: this proves a family of OEIS conjectures and adds a new closed form. It is not a breakthrough. The constant could plausibly be extracted from the asymptotic analysis in Knopfmacher et al., though I did not find it stated there in this form.
-
-\section{Limitations / further work}
-
-No closed form or generating function for \(R_L\) is proved. Hardin’s row recurrences (fixed \(n\), varying \(k\)) are not formalized. They follow from the transfer matrix \(I+A(P_{n+1})\) and the Chebyshev g.f., but are not formalized here.
-
-Possible next steps: submit the proof and the sequences \(R_L\), \(c_k\) to OEIS, and formalize the row recurrences.
-
+\begin{thebibliography}{9}
+\bibitem{oeis} R.~H.~Hardin, \emph{A188866: $T(n,k)$ is the number of $n\times k$ binary arrays without the pattern $0\,1$ diagonally, vertically or antidiagonally}, The On-Line Encyclopedia of Integer Sequences, 2011, \url{https://oeis.org/A188866}.
+\bibitem{oeiscols} R.~H.~Hardin, \emph{A188861, A188862, A188863, A188864, A188865} (columns $k=4,\dots,8$ of A188866), The On-Line Encyclopedia of Integer Sequences, 2011, \url{https://oeis.org/A188861}.
+\bibitem{howroyd} A.~Howroyd, \emph{Bijection with $0..n$ strings of length $k$}, 2017, linked from A188866, \url{https://oeis.org/A188866/a188866.txt}.
+\bibitem{kmmp} A.~Knopfmacher, T.~Mansour, A.~Munagi, H.~Prodinger, \emph{Smooth words and Chebyshev polynomials}, arXiv:0809.0551, 2008.
+\bibitem{fc} Google DeepMind, \emph{formal-conjectures}, \url{https://github.com/google-deepmind/formal-conjectures}.
+\bibitem{mathlib} The mathlib Community, \emph{The Lean mathematical library}, in Proc.\ CPP 2020, ACM, 367--381.
+\bibitem{lean4} L.~de Moura, S.~Ullrich, \emph{The Lean 4 theorem prover and programming language}, in CADE-28, LNCS 12699, Springer, 2021, 625--635.
+\end{thebibliography}
 \end{document}
