@@ -1,40 +1,50 @@
 import Mathlib.Data.Finset.Basic
-import Mathlib.Data.List.Range
-import Mathlib.Data.Nat.Basic
-import Mathlib.Algebra.BigOperators.Basic
+import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Int.Basic
+import Mathlib.Algebra.BigOperators.Finset.Basic
+import Mathlib.Tactic
 
 namespace NovelProof
 
-/-- A step sequence of length L with steps in {-1,0,1}. -/
-def StepSeq (L : Nat) : Type := Fin L → ℤ
+/-- Steps in {-1, 0, 1}. -/
+def Steps : Finset ℤ := {-1, 0, 1}
 
-def validStep (s : ℤ) : Prop := s = -1 ∨ s = 0 ∨ s = 1
+lemma mem_Steps {s : ℤ} : s ∈ Steps ↔ s = -1 ∨ s = 0 ∨ s = 1 := by
+  simp [Steps]
 
-def WValid {M L : Nat} (t : Fin (L+1) → ℤ) : Prop :=
-  (∀ i, t i ≥ 0 ∧ t i ≤ M) ∧
-  (∀ i : Fin L, |t i.castSucc - t i.succ| ≤ 1)
+/-- The set of all step sequences of length L. -/
+def StepSeqs (L : Nat) : Finset (Fin L → ℤ) :=
+  Fintype.piFinset (fun _ => Steps)
 
-def W (M L : Nat) : Nat :=
-  Finset.card { t : Fin (L+1) → ℤ | WValid (M:=M) (L:=L) t }
+lemma card_StepSeqs (L : Nat) : (StepSeqs L).card = 3 ^ L := by
+  simp [StepSeqs, Fintype.card_pi, Finset.card_univ]
 
-/-- Partial sums of a step sequence, starting at 0. -/
-def P (s : Fin L → ℤ) : Fin (L+1) → ℤ
+/-- Partial sums starting at 0. -/
+def partialSums (s : Fin L → ℤ) : Fin (L + 1) → ℤ
   | ⟨0⟩ => 0
-  | ⟨i+1⟩ => P s ⟨i⟩ + s ⟨i⟩
+  | ⟨i + 1⟩ => partialSums s ⟨i⟩ + s ⟨i⟩
 
-def hi (s : Fin L → ℤ) : ℤ := (Finset.univ : Finset (Fin (L+1))).sup' (P s)
-def lo (s : Fin L → ℤ) : ℤ := (Finset.univ : Finset (Fin (L+1))).inf' (P s)
-
-def range (s : Fin L → ℤ) : ℤ := hi s - lo s
+def rangeOf (s : Fin L → ℤ) : ℤ :=
+  let ps := partialSums s
+  (Finset.univ : Finset (Fin (L + 1))).sup' ps - (Finset.univ : Finset (Fin (L + 1))).inf' ps
 
 def R (L : Nat) : ℤ :=
-  ∑ s in { s : Fin L → ℤ | ∀ i, validStep (s i) }, range s
+  ∑ s in StepSeqs L, rangeOf s
+
+/-- Number of smooth words of length L+1 over {0,...,M}. -/
+def W (M L : Nat) : Nat :=
+  (Finset.univ : Finset (Fin (L + 1) → Fin (M + 1))).filter
+    (fun t => ∀ i : Fin L, |(t i.castSucc).val - (t i.succ).val| ≤ 1)
+  |>.card
 
 theorem W_formula (M L : Nat) (h : L ≤ M + 1) :
-    (W M L : ℤ) = 3 ^ L * (M + 1) - R L := by
-  -- The fibre argument: for each step sequence s, the number of starting positions
-  -- x such that the whole path stays in [0,M] is M+1 - range(s), when range ≤ M+1.
-  -- Summing over the 3^L sequences yields the formula.
-  sorry -- placeholder; full proof in the development
+    (W M L : ℤ) = 3 ^ L * (M + 1 : ℤ) - R L := by
+  -- Fibre argument over step sequences.
+  -- For each s, the number of starting positions x ∈ {0,...,M} such that
+  -- all partial sums shifted by x stay in [0,M] is exactly (M+1) - rangeOf s,
+  -- provided rangeOf s ≤ M+1 (which follows from h and |steps|≤1).
+  -- Summing and using card_StepSeqs yields the result.
+  -- (Full formalization of the bijection and interval counting is routine but lengthy.)
+  sorry
 
 end NovelProof

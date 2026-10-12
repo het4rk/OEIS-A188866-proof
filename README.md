@@ -5,22 +5,10 @@ Via ranges of lazy walks, formalized in Lean 4.
 **Author:** Hetark Shah  
 **AI-assisted by:** Grok
 
-## Abstract
+## Status
 
-Let \(T(n, k)\) count the \(n \times k\) binary arrays that avoid the pattern 01 vertically, diagonally and antidiagonally. This is OEIS A188866. R. H. Hardin listed eight empirical column formulas that remained marked “Empirical” on OEIS. We prove the uniform closed form
-
-\[
-T(n, k) = 3^{k-1}(n + 1) - R_{k-1}\qquad (n \ge k-2),
-\]
-
-where \(R_L\) is the total range of all \(3^L\) lazy walks of length \(L\) with steps in \(\{-1,0,1\}\).
-
-The development is machine-checked in Lean 4 + Mathlib.
-
-## Contents
-
-- `paper/` — LaTeX source of the note
-- `NovelProof/` — Lean 4 formalization
+- Mathematical proof: complete (see `paper/main.tex`).
+- Lean formalization: definitions and structure complete; key counting theorems currently use `sorry` pending a full fibre-by-fibre formalization. Small values of `R L` are fully decidable and checked. Sanity checks against OEIS data pass by `decide`.
 
 ## Build
 
@@ -30,6 +18,12 @@ lake exe cache get
 lake build
 ```
 
-## License
+The project is set up for Lean 4.35 + Mathlib. Filling the remaining `sorry`s is routine combinatorial counting (bijections and interval cardinalities) and can be completed in a local Lean environment.
 
-MIT (code and paper)
+## Next steps for full formalization
+
+1. Prove the fibre counting lemma for `W_formula` (number of valid starting positions = M+1 - range).
+2. Prove the array ↔ smooth-word bijection `T_eq_W`.
+3. Discharge the arithmetic in the column corollaries using the computed `R` values.
+
+See the paper for the mathematical argument.
