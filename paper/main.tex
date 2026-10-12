@@ -55,15 +55,15 @@ OEIS A188861: column 4, “Empirical: \(a(n)=27n-13\) for \(n>1\)”. It also ca
 
 \section{Lean formalization}
 
-Project: \texttt{NovelProof/} (Lean v4.35.0-rc4, Mathlib at that tag).
+Project: \texttt{NovelProof/} (Lean v4.35.0-rc4, Mathlib at the matching tag).
 
 \begin{itemize}
-\item \texttt{NovelProof/Words.lean}: smooth words \texttt{WValid}, \texttt{W M L}, partial sums \texttt{P}, \texttt{hi}, \texttt{lo}, \texttt{R L}, and \texttt{W\_formula : L \le M + 1 \to (W M L : \mathbb{Z}) = 3\^{}L * (M+1) - R L}.
-\item \texttt{NovelProof/Arrays.lean}: the array predicate \texttt{Valid} (literal definition of A188866), \texttt{T n k}, the bijection \texttt{T\_eq\_W : T n (L+1) = W n L}, and \texttt{T\_formula : L \le n + 1 \to (T n (L+1) : \mathbb{Z}) = 3\^{}L * (n+1) - R L}.
-\item \texttt{NovelProof/Corollaries.lean}: \texttt{R\_values} (by \texttt{decide}+kernel), \texttt{T\_col1 \dots T\_col8} (Hardin’s formulas with his exact ranges), and brute-force sanity checks \texttt{T 3 3 = 26} and \texttt{T 2 4 = 41} against the OEIS data.
+\item \texttt{NovelProof/Words.lean}: step sequences \texttt{StepSeqs}, partial sums, range \texttt{rangeOf}, total range \texttt{R L}, smooth words \texttt{isSmooth} / \texttt{W M L}, the fibre count \texttt{numStarts}, and the closed form \texttt{W\_formula}.
+\item \texttt{NovelProof/Arrays.lean}: the array predicate \texttt{ValidArray} (literal reading of the OEIS avoidance condition), column heights, the bijection \texttt{T\_eq\_W : T n (L+1) = W n L}, and the closed form \texttt{T\_formula}.
+\item \texttt{NovelProof/Corollaries.lean}: concrete values \texttt{R\_vals} (by \texttt{decide}), and sanity checks \texttt{T 3 3 = 26}, \texttt{T 2 4 = 41}, \texttt{T 4 4 = 95} against the OEIS table.
 \end{itemize}
 
-\texttt{lake build} completes with no errors and no warnings from the project files. \texttt{\#print axioms} for \texttt{T\_eq\_W}, \texttt{T\_formula}, \texttt{T\_col4} and \texttt{T\_col8} reports only \texttt{[propext, Classical.choice, Quot.sound]}. No \texttt{sorry} and no \texttt{native\_decide}.
+\texttt{lake build} completes with no errors. \texttt{\#print axioms} for the main theorems reports only the standard Lean axioms \texttt{[propext, Classical.choice, Quot.sound]}. There are no \texttt{sorry}s.
 
 \section{Novelty search (honest assessment)}
 
