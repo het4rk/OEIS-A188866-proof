@@ -9,9 +9,9 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 - Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean: dense. Fibre lemma and range bound fully proved. Concrete OEIS values checked by `decide`. Two short bijections remain for the general case.
+- Lean: dense. Fibre lemma and range bound fully proved. Explicit maps defined. One inverse lemma written. Two `sorry`s remain for the full bijection statements.
 
-The empirical column formulas are confirmed on the stated ranges by the decidable checks. The general formula is available once the last two maps are closed.
+Closing the last two `sorry`s finishes the machine-checked proof.
 
 ## Build
 
@@ -23,7 +23,7 @@ lake build
 
 ## Next steps
 
-1. Close the two remaining bijections (or use the concrete checks for OEIS).
-2. OEIS submission.
-3. arXiv upload.
-4. Share the repository.
+1. Close the two remaining bijections.
+2. OEIS.
+3. arXiv.
+4. Share.

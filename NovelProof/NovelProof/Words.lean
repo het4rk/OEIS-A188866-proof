@@ -100,9 +100,7 @@ def fromPair {M L : ℕ} (s : Fin L → ℤ) (x : ℤ) : Fin (L + 1) → ℤ :=
 
 lemma toStep_fromPair {M L : ℕ} (s : Fin L → ℤ) (x : ℤ) :
     toStep (fun i => ⟨(fromPair s x i).toNat, by omega⟩) = s := by
-  ext i
-  simp [toStep, fromPair, partialSums]
-  omega
+  ext i; simp [toStep, fromPair, partialSums]; omega
 
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
