@@ -11,7 +11,7 @@ Via ranges of lazy walks, formalized in Lean 4.
 - LaTeX paper: complete and arXiv-ready.
 - Lean: `numStarts_eq_range` fully proved. `range_le_L` has complete induction. Two short bijections remain.
 
-The formalization is structured for the final two maps. Closing them yields a fully machine-checked proof.
+Closing the last two `sorry`s finishes the machine-checked proof.
 
 ## Build
 
