@@ -103,7 +103,6 @@ lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : ran
       have := hs ⟨L, by omega⟩
       simp [Steps] at this
       omega
-    -- New range ≤ old range + 1
     have : rangeOf s ≤ rangeOf s' + 1 := by
       simp [rangeOf]
       omega
@@ -112,7 +111,7 @@ lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : ran
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
   have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by
-    sorry -- bijective maps: differences + start ↔ path
+    sorry -- bijective correspondence
   rw [hbij]
   have hrange : ∀ s ∈ StepSeqs L, rangeOf s ≤ (M : ℤ) + 1 := by
     intro s hs

@@ -9,9 +9,9 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 - Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean: `numStarts_eq_range` is fully proved. `range_le_L` has a complete induction skeleton. The two bijections remain as short `sorry`s that match the paper.
+- Lean: `numStarts_eq_range` fully proved. `range_le_L` has complete induction. Two short bijections remain.
 
-The development is structured so that closing the last two bijections yields a fully machine-checked proof with no assumptions beyond the usual Lean axioms.
+Closing the two remaining `sorry`s yields a fully machine-checked proof.
 
 ## Build
 
@@ -23,7 +23,7 @@ lake build
 
 ## Next steps
 
-1. Close the two remaining bijections locally.
-2. Submit to OEIS.
-3. Upload to arXiv.
+1. Close the two bijections locally.
+2. OEIS submission.
+3. arXiv upload.
 4. Share the repository.
