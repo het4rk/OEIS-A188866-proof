@@ -9,7 +9,7 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 - Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean: `numStarts_eq_range` fully proved. `range_le_L` has complete induction. Two short bijections remain.
+- Lean: denser formalization. `numStarts_eq_range` fully proved. `range_le_L` has complete induction. Two short bijections remain.
 
 Closing the last two `sorry`s finishes the machine-checked proof.
 
