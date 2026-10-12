@@ -1,0 +1,84 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\usepackage{enumitem}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\title{A proof of Hardin’s empirical column formulas\\for OEIS A188866, via ranges of lazy walks,\\formalized in Lean 4}
+\author{Hetark Shah\\{\small AI-assisted by Grok}}
+\date{October 12, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let \(T(n,k)\) count the \(n\times k\) binary arrays that avoid the pattern 01 vertically, diagonally and antidiagonally. In other words, a 0 in row \(i\) forces 0s in the three cells below it in row \(i+1\). This is OEIS A188866. Its column \(k=4\) is OEIS A188861. R.~H.~Hardin listed eight empirical column formulas (\(T(n,4)=27n-13\) for \(n>1\), \(\dots\), \(T(n,8)=2187n-3495\) for \(n>5\)), and they are still marked “Empirical” on OEIS. We prove one uniform closed form:
+
+\begin{theorem}
+For all \(k\ge 1\) and \(n\ge k-2\),
+\[
+T(n,k)=3^{k-1}(n+1)-R_{k-1},\qquad
+R_L=\sum_{s\in\{-1,0,1\}^L}\bigl(\max_i S_i-\min_i S_i\bigr),
+\]
+where \(S_0=0\), \(S_i=s_1+\dots+s_i\). So \(R_L\) is the total range of all \(3^L\) lazy walks of length \(L\).
+\end{theorem}
+
+\(R_0,\dots,R_9=0,2,10,40,146,508,1716,5682,18546,59884\). Plugging in \(R_0,\dots,R_7\) gives all eight of Hardin’s column formulas, each with exactly Hardin’s range of validity. The whole development is machine-checked in Lean 4 + Mathlib with no \texttt{sorry} and no axioms beyond Lean’s standard three.
+\end{abstract}
+
+\section{Statement and context}
+
+OEIS A188866 (R.~H.~Hardin, 2011): \(T(n,k)\) as above. It lists the formulas
+\begin{align*}
+T(n,1)&=n+1,&&T(n,2)=3n+1,&&T(n,3)=9n-1,\\
+T(n,4)&=27n-13\ (n>1),&&T(n,5)=81n-65\ (n>2),\\
+T(n,6)&=243n-265\ (n>3),&&T(n,7)=729n-987\ (n>4),\\
+T(n,8)&=2187n-3495\ (n>5),
+\end{align*}
+all labelled Empirical.
+
+OEIS A188861: column 4, “Empirical: \(a(n)=27n-13\) for \(n>1\)”. It also carries conjectured g.f.\ and recurrence from C.~Barker (2018).
+
+\section{Proof}
+
+\textbf{Step 1 (arrays \(\leftrightarrow\) smooth words).} Taking \(j'=j\) shows each column is a block of 1s followed by 0s. Let \(t_j\in\{0,\dots,n\}\) be the number of 1s in column \(j\). The diagonal conditions hold exactly when \(|t_j-t_{j+1}|\le 1\) for every \(j\). If \(t_j\ge t_{j+2}\), the 0 at row \(t_j\) of column \(j\) sits above a 1 in column \(j'\). Conversely, if all adjacent letters differ by at most 1, no such configuration can occur. So \(T(n,k)\) counts words \(t\in\{0,\dots,n\}^k\) with adjacent letters differing by at most 1. This bijection was noted on OEIS by A.~Howroyd (2017). Such words are the “smooth words” of Knopfmacher, Mansour, Munagi and Prodinger.
+
+\textbf{Step 2 (fibres over step sequences).} Write \(L=k-1\) and \(M=n\). A smooth word is fixed by its step sequence \(s\in\{-1,0,1\}^L\) together with its first letter \(x\), because \(t_i=x+S_i\). The word stays inside \([0,M]\) exactly when \(x\in[-\min S,M-\max S]\). That interval has \(M+1-(\max S-\min S)\) points whenever \(\max S-\min S\le L\le M+1\). Summing over the \(3^L\) step sequences gives \(T(n,k)=3^L(M+1)-R_L\).
+
+\textbf{Step 3.} Evaluating \(R_0,\dots,R_7\) (done in Lean by kernel computation) gives the eight formulas.
+
+\section{Lean formalization}
+
+Project: \texttt{NovelProof/} (Lean v4.35.0-rc4, Mathlib at that tag).
+
+\begin{itemize}
+\item \texttt{NovelProof/Words.lean}: smooth words \texttt{WValid}, \texttt{W M L}, partial sums \texttt{P}, \texttt{hi}, \texttt{lo}, \texttt{R L}, and \texttt{W\_formula : L \le M + 1 \to (W M L : \mathbb{Z}) = 3\^{}L * (M+1) - R L}.
+\item \texttt{NovelProof/Arrays.lean}: the array predicate \texttt{Valid} (literal definition of A188866), \texttt{T n k}, the bijection \texttt{T\_eq\_W : T n (L+1) = W n L}, and \texttt{T\_formula : L \le n + 1 \to (T n (L+1) : \mathbb{Z}) = 3\^{}L * (n+1) - R L}.
+\item \texttt{NovelProof/Corollaries.lean}: \texttt{R\_values} (by \texttt{decide}+kernel), \texttt{T\_col1 \dots T\_col8} (Hardin’s formulas with his exact ranges), and brute-force sanity checks \texttt{T 3 3 = 26} and \texttt{T 2 4 = 41} against the OEIS data.
+\end{itemize}
+
+\texttt{lake build} completes with no errors and no warnings from the project files. \texttt{\#print axioms} for \texttt{T\_eq\_W}, \texttt{T\_formula}, \texttt{T\_col4} and \texttt{T\_col8} reports only \texttt{[propext, Classical.choice, Quot.sound]}. No \texttt{sorry} and no \texttt{native\_decide}.
+
+\section{Novelty search (honest assessment)}
+
+What I checked: the OEIS entries A188866, A188861 and A188860 and their cross-references, OEIS searches for the sequences \(R_L\) and \(c_k=3^{k-1}-R_{k-1}\) (no hits for 0,2,10,40,146,508,1716 or 1,1,-1,-13,-65,-265,-987), and web searches. I also checked the smooth-words literature: A.~Knopfmacher, T.~Mansour, A.~Munagi, H.~Prodinger, Smooth words and Chebyshev polynomials, arXiv:0809.0551.
+
+\textbf{Known:} the bijection to smooth words (Howroyd on OEIS), and a full generating function and trigonometric formula for smooth words (Knopfmacher et al.\ 2008). Each fixed-\(k\) column formula can therefore be derived from known results in principle, so the column formulas are not deep open problems. Even so, OEIS still lists them as unproven (“Empirical”).
+
+\textbf{Believed new:} (i) the uniform statement \(T(n,k)=3^{k-1}(n+1)-R_{k-1}\) for \(n\ge k-2\), which identifies the constant term as the total range of lazy walks; (ii) the integer sequences \(R_L\) and \(c_k\), which are absent from OEIS; (iii) the first formal verification of these formulas, as far as I can find.
+
+\textbf{Confidence:} high that the theorem is correct (machine-checked). The novelty is modest: this proves a family of OEIS conjectures and adds a new closed form. It is not a breakthrough. The constant could plausibly be extracted from the asymptotic analysis in Knopfmacher et al., though I did not find it stated there in this form.
+
+\section{Limitations / further work}
+
+No closed form or generating function for \(R_L\) is proved. Hardin’s row recurrences (fixed \(n\), varying \(k\)) are not formalized. They follow from the transfer matrix \(I+A(P_{n+1})\) and the Chebyshev g.f., but are not formalized here.
+
+Possible next steps: submit the proof and the sequences \(R_L\), \(c_k\) to OEIS, and formalize the row recurrences.
+
+\end{document}
