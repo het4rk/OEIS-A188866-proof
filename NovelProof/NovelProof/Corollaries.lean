@@ -7,8 +7,6 @@ theorem R_vals :
     R 4 = 146 ∧ R 5 = 508 ∧ R 6 = 1716 ∧ R 7 = 5682 := by
   decide
 
--- The eight Hardin column formulas follow by arithmetic once T_formula and R_vals are available.
-
 example : T 3 3 = 26 := by decide
 example : T 2 4 = 41 := by decide
 

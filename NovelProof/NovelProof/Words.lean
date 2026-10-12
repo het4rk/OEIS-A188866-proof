@@ -6,41 +6,31 @@ import Mathlib.Tactic
 
 namespace NovelProof
 
-/-- Steps in {-1, 0, 1}. -/
 def Steps : Finset ℤ := {-1, 0, 1}
-
 lemma Steps_card : Steps.card = 3 := by decide
 
-/-- All step sequences of length L. -/
-def StepSeqs (L : ℕ) : Finset (Fin L → ℤ) :=
-  Fintype.piFinset (fun _ => Steps)
-
+def StepSeqs (L : ℕ) : Finset (Fin L → ℤ) := Fintype.piFinset (fun _ => Steps)
 lemma card_StepSeqs (L : ℕ) : (StepSeqs L).card = 3 ^ L := by
   simp [StepSeqs, Fintype.card_piFinset, Steps_card]
 
-/-- Partial sums of a step sequence, starting at 0. -/
 def partialSums {L : ℕ} (s : Fin L → ℤ) : Fin (L + 1) → ℤ
   | ⟨0, _⟩ => 0
   | ⟨i + 1, h⟩ => partialSums s ⟨i, Nat.lt_of_succ_lt_succ h⟩ + s ⟨i, Nat.lt_of_succ_lt_succ h⟩
 
-/-- Range of the partial-sum path (max − min). -/
 def rangeOf {L : ℕ} (s : Fin L → ℤ) : ℤ :=
   let ps := Finset.image (partialSums s) Finset.univ
   ps.max'.getD 0 - ps.min'.getD 0
 
 def R (L : ℕ) : ℤ := ∑ s ∈ StepSeqs L, rangeOf s
 
-/-- Smooth words of length L+1 over alphabet {0, …, M}. -/
 def isSmooth {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) : Prop :=
   ∀ i : Fin L, |(t i.castSucc).val - (t i.succ).val| ≤ 1
 
-def W (M L : ℕ) : ℕ :=
-  (Finset.univ.filter (isSmooth (M := M) (L := L))).card
+def W (M L : ℕ) : ℕ := (Finset.univ.filter (isSmooth (M:=M) (L:=L))).card
 
-/-- Number of valid starting positions for a given step sequence. -/
 def numStarts {L : ℕ} (s : Fin L → ℤ) (M : ℕ) : ℕ :=
   ((Finset.Icc (0 : ℤ) (M : ℤ)).filter
-    (fun x => ∀ i : Fin (L + 1), 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ))).card
+    (fun x => ∀ i, 0 ≤ x + partialSums s i ∧ x + partialSums s i ≤ (M : ℤ))).card
 
 lemma partialSums_zero {L : ℕ} (s : Fin L → ℤ) : partialSums s ⟨0, by omega⟩ = 0 := rfl
 
@@ -54,7 +44,6 @@ lemma zero_le_max {L : ℕ} (s : Fin L → ℤ) :
   apply Finset.le_max'
   exact ⟨⟨0, by omega⟩, by simp [partialSums]⟩
 
-/-- The valid starting positions form an interval of length (M + 1) − range. -/
 lemma numStarts_eq_range {L M : ℕ} (s : Fin L → ℤ) (hr : rangeOf s ≤ (M : ℤ) + 1) :
     numStarts s M = (M + 1 : ℕ) - rangeOf s := by
   set ps := Finset.image (partialSums s) Finset.univ
@@ -69,17 +58,13 @@ lemma numStarts_eq_range {L M : ℕ} (s : Fin L → ℤ) (hr : rangeOf s ≤ (M 
     constructor
     · intro h
       constructor
-      · have hmin : x + m ≥ 0 := by
-          obtain ⟨i, hi⟩ := Finset.min'_mem ps (by simp)
-          have := h i
-          simp [hi] at this
-          exact this.1
+      · obtain ⟨i, hi⟩ := Finset.min'_mem ps (by simp)
+        have := h i
+        simp [hi] at this
         omega
-      · have hmax : x + Mmax ≤ (M : ℤ) := by
-          obtain ⟨i, hi⟩ := Finset.max'_mem ps (by simp)
-          have := h i
-          simp [hi] at this
-          exact this.2
+      · obtain ⟨i, hi⟩ := Finset.max'_mem ps (by simp)
+        have := h i
+        simp [hi] at this
         omega
     · intro ⟨h1, h2⟩ i
       have hS : m ≤ partialSums s i ∧ partialSums s i ≤ Mmax := by
@@ -105,12 +90,29 @@ lemma numStarts_eq_range {L M : ℕ} (s : Fin L → ℤ) (hr : rangeOf s ≤ (M 
   simp [hrange]
   omega
 
+lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : s ∈ StepSeqs L) : rangeOf s ≤ L := by
+  -- Each step is in {-1,0,1}, so the range of partial sums is at most L.
+  -- Proved by induction on L.
+  sorry
+
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
-  -- The set of smooth words is in bijection with pairs (s, x) where s ∈ StepSeqs L
-  -- and x is a valid start for s. Hence the cardinality is the sum of numStarts.
-  -- Under the hypothesis rangeOf s ≤ L ≤ M + 1 for every s (because each step has size at most 1),
-  -- numStarts s M = M + 1 − rangeOf s. Summing finishes the proof.
-  sorry -- bijection and range ≤ L are standard; see paper for the argument
+  have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by
+    sorry -- explicit bijection: step sequence + valid start ↔ smooth word
+  rw [hbij]
+  have hrange : ∀ s ∈ StepSeqs L, rangeOf s ≤ (M : ℤ) + 1 := by
+    intro s hs
+    have := range_le_L s hs
+    omega
+  calc
+    ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) = ∑ s ∈ StepSeqs L, ((M + 1 : ℕ) - rangeOf s : ℤ) := by
+      apply Finset.sum_congr rfl
+      intro s hs
+      simp [numStarts_eq_range s (hrange s hs)]
+    _ = ∑ s ∈ StepSeqs L, ((M + 1 : ℤ) - rangeOf s) := by simp
+    _ = (StepSeqs L).card * (↑M + 1) - ∑ s ∈ StepSeqs L, rangeOf s := by
+      rw [Finset.sum_sub_distrib, Finset.sum_const]
+    _ = 3 ^ L * (↑M + 1) - R L := by
+      simp [card_StepSeqs, R]
 
 end NovelProof
