@@ -10,9 +10,7 @@ def ValidArray {n k : ℕ} (a : Fin n → Fin k → Bool) : Prop :=
 def T (n k : ℕ) : ℕ := (Finset.univ.filter ValidArray).card
 
 theorem T_eq_W (n L : ℕ) : T n (L + 1) = W n L := by
-  -- Bijection via column heights: each column is an initial segment of 1s followed by 0s;
-  -- diagonal conditions ⇔ adjacent heights differ by at most 1.
-  sorry
+  sorry -- column-height bijection
 
 theorem T_formula (n L : ℕ) (h : L ≤ n + 1) :
     (T n (L + 1) : ℤ) = 3 ^ L * ((n + 1) : ℤ) - R L := by

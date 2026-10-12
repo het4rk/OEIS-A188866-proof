@@ -7,11 +7,17 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 ## Status
 
-- Mathematical proof: complete (`paper/main.tex`).
+- Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean formalization: the non-trivial fibre-interval lemma `numStarts_eq_range` is fully proved with no `sorry`. The remaining `sorry`s are the standard range bound (`range_le_L`) and the two bijections (smooth words ↔ (step sequence, start) and arrays ↔ smooth words). These are routine and match the argument already written in the paper.
+- Lean: the core fibre-interval lemma `numStarts_eq_range` is fully proved (no `sorry`).
+  The three remaining `sorry`s are short standard arguments:
+  1. `range_le_L` (induction on bounded steps),
+  2. the summation bijection in `W_formula`,
+  3. the array–smooth-word bijection `T_eq_W`.
 
-`R 0` through `R 7` are fully decidable. OEIS sanity checks pass by `decide`.
+Once these three are discharged locally, `lake build` succeeds with no `sorry` and only the usual Lean axioms.
+
+`R_0` … `R_7` are decidable. OEIS sanity checks pass.
 
 ## Build
 
@@ -21,17 +27,9 @@ lake exe cache get
 lake build
 ```
 
-## Remaining work for full machine-checking
-
-1. Prove `range_le_L` by induction (each step changes the partial sum by at most 1).
-2. Construct the explicit bijection for the summation in `W_formula`.
-3. Construct the column-height bijection for `T_eq_W`.
-
-All three are short and standard. Once discharged, `lake build` will succeed with no `sorry` and only the usual Lean axioms.
-
 ## Next steps
 
-1. Discharge the three remaining `sorry`s locally.
-2. Submit the closed form and the sequences `R_L` to OEIS.
+1. Discharge the three remaining `sorry`s.
+2. Submit the closed form and sequences `R_L` to OEIS.
 3. Upload the LaTeX note to arXiv.
 4. Share the repository.

@@ -90,19 +90,23 @@ lemma numStarts_eq_range {L M : ℕ} (s : Fin L → ℤ) (hr : rangeOf s ≤ (M 
   simp [hrange]
   omega
 
-lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : s ∈ StepSeqs L) : rangeOf s ≤ L := by
-  -- Each step is in {-1,0,1}, so the range of partial sums is at most L.
-  -- Proved by induction on L.
-  sorry
+lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : rangeOf s ≤ (L : ℤ) := by
+  induction L with
+  | zero =>
+    simp [rangeOf, partialSums]
+    omega
+  | succ L ih =>
+    sorry -- induction step: new partial sum differs by at most 1 from previous
 
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
   have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by
-    sorry -- explicit bijection: step sequence + valid start ↔ smooth word
+    sorry -- bijective correspondence between smooth words and (s, valid start)
   rw [hbij]
   have hrange : ∀ s ∈ StepSeqs L, rangeOf s ≤ (M : ℤ) + 1 := by
     intro s hs
-    have := range_le_L s hs
+    have hsteps : ∀ i, s i ∈ Steps := fun i => (Finset.mem_piFinset.mp hs) i
+    have := range_le_L s hsteps
     omega
   calc
     ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) = ∑ s ∈ StepSeqs L, ((M + 1 : ℕ) - rangeOf s : ℤ) := by
