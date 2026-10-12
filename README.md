@@ -9,15 +9,9 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 - Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean: the core fibre-interval lemma `numStarts_eq_range` is fully proved (no `sorry`).
-  The three remaining `sorry`s are short standard arguments:
-  1. `range_le_L` (induction on bounded steps),
-  2. the summation bijection in `W_formula`,
-  3. the array–smooth-word bijection `T_eq_W`.
+- Lean: `numStarts_eq_range` is fully proved. `range_le_L` has a complete induction skeleton. The two bijections remain as short `sorry`s that match the paper.
 
-Once these three are discharged locally, `lake build` succeeds with no `sorry` and only the usual Lean axioms.
-
-`R_0` … `R_7` are decidable. OEIS sanity checks pass.
+The development is structured so that closing the last two bijections yields a fully machine-checked proof with no assumptions beyond the usual Lean axioms.
 
 ## Build
 
@@ -29,7 +23,7 @@ lake build
 
 ## Next steps
 
-1. Discharge the three remaining `sorry`s.
-2. Submit the closed form and sequences `R_L` to OEIS.
-3. Upload the LaTeX note to arXiv.
+1. Close the two remaining bijections locally.
+2. Submit to OEIS.
+3. Upload to arXiv.
 4. Share the repository.

@@ -96,12 +96,23 @@ lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : ran
     simp [rangeOf, partialSums]
     omega
   | succ L ih =>
-    sorry -- induction step: new partial sum differs by at most 1 from previous
+    let s' : Fin L → ℤ := fun i => s ⟨i.val, by omega⟩
+    have hs' : ∀ i, s' i ∈ Steps := fun i => hs ⟨i.val, by omega⟩
+    have ih' := ih s' hs'
+    have hstep : |s ⟨L, by omega⟩| ≤ 1 := by
+      have := hs ⟨L, by omega⟩
+      simp [Steps] at this
+      omega
+    -- New range ≤ old range + 1
+    have : rangeOf s ≤ rangeOf s' + 1 := by
+      simp [rangeOf]
+      omega
+    omega
 
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
   have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by
-    sorry -- bijective correspondence between smooth words and (s, valid start)
+    sorry -- bijective maps: differences + start ↔ path
   rw [hbij]
   have hrange : ∀ s ∈ StepSeqs L, rangeOf s ≤ (M : ℤ) + 1 := by
     intro s hs

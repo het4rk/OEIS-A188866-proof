@@ -10,7 +10,7 @@ def ValidArray {n k : ℕ} (a : Fin n → Fin k → Bool) : Prop :=
 def T (n k : ℕ) : ℕ := (Finset.univ.filter ValidArray).card
 
 theorem T_eq_W (n L : ℕ) : T n (L + 1) = W n L := by
-  sorry -- column-height bijection
+  sorry -- column heights give the smooth word bijection
 
 theorem T_formula (n L : ℕ) (h : L ≤ n + 1) :
     (T n (L + 1) : ℤ) = 3 ^ L * ((n + 1) : ℤ) - R L := by
