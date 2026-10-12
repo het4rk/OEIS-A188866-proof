@@ -111,7 +111,7 @@ lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : ran
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
   have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by
-    sorry -- the two maps are inverse
+    sorry
   rw [hbij]
   have hrange : ∀ s ∈ StepSeqs L, rangeOf s ≤ (M : ℤ) + 1 := by
     intro s hs
