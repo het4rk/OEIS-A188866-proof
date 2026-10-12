@@ -9,9 +9,9 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 - Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean: dense. Fibre lemma and range bound fully proved. Explicit maps defined. One inverse lemma written. Two `sorry`s remain for the full bijection statements.
+- Lean formalization: **complete**. Both bijections are closed; `lake build` succeeds with no `sorry` and only the standard Lean axioms.
 
-Closing the last two `sorry`s finishes the machine-checked proof.
+The uniform closed form \( T(n,k) = 3^{k-1}(n+1) - R_{k-1} \) (for \( n \ge k-2 \)) is now fully machine-checked.
 
 ## Build
 
@@ -23,7 +23,6 @@ lake build
 
 ## Next steps
 
-1. Close the two remaining bijections.
-2. OEIS.
-3. arXiv.
-4. Share.
+1. Submit the sequences \( R_L \) and the column formulas to OEIS.
+2. arXiv.
+3. Share.
