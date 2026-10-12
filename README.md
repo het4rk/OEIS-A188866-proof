@@ -21,6 +21,8 @@ lake exe cache get
 lake build
 ```
 
+The project uses Lean v4.35.0-rc4 with Mathlib v4.35.0-rc1. Exact dependency revisions are locked in `NovelProof/lake-manifest.json`.
+
 ## Next steps
 
 1. Submit the sequences \( R_L \) and the column formulas to OEIS.
