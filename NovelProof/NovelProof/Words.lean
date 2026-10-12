@@ -92,6 +92,12 @@ lemma range_le_L {L : ℕ} (s : Fin L → ℤ) (hs : ∀ i, s i ∈ Steps) : ran
     have : rangeOf s ≤ rangeOf s' + 1 := by simp [rangeOf]; omega
     omega
 
+def toStep {M L : ℕ} (t : Fin (L + 1) → Fin (M + 1)) : Fin L → ℤ :=
+  fun i => (t i.succ).val - (t i.castSucc).val
+
+def fromPair {M L : ℕ} (s : Fin L → ℤ) (x : ℤ) : Fin (L + 1) → ℤ :=
+  fun i => x + partialSums s i
+
 theorem W_formula (M L : ℕ) (h : L ≤ M + 1) :
     (W M L : ℤ) = 3 ^ L * ((M + 1) : ℤ) - R L := by
   have hbij : (W M L : ℤ) = ∑ s ∈ StepSeqs L, (numStarts s M : ℤ) := by sorry

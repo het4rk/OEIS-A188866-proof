@@ -9,6 +9,9 @@ def ValidArray {n k : ℕ} (a : Fin n → Fin k → Bool) : Prop :=
 
 def T (n k : ℕ) : ℕ := (Finset.univ.filter ValidArray).card
 
+def colHeight {n k : ℕ} (a : Fin n → Fin k → Bool) (j : Fin k) : ℕ :=
+  (Finset.univ.filter (fun i : Fin n => a i j = true)).card
+
 theorem T_eq_W (n L : ℕ) : T n (L + 1) = W n L := by
   sorry
 

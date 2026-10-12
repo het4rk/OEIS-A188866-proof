@@ -9,9 +9,9 @@ Via ranges of lazy walks, formalized in Lean 4.
 
 - Mathematical proof: complete.
 - LaTeX paper: complete and arXiv-ready.
-- Lean: dense formalization. `numStarts_eq_range` and `range_le_L` fully proved. Two short bijections remain as `sorry`.
+- Lean: dense. `numStarts_eq_range` and `range_le_L` fully proved. Explicit maps defined for the two remaining bijections.
 
-Closing the last two `sorry`s finishes the machine-checked proof.
+Closing the last two `sorry`s (the inverse properties of the maps) finishes the machine-checked proof.
 
 ## Build
 
